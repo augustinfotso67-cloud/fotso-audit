@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allow DLL Imports : anatomie d'un red flag à l'installation d'un EA — FOTSO COMPANY</title>
+<meta name="description" content="L'analyse d'un auditeur quantitatif sur pourquoi la case « Allow DLL imports » dans MetaTrader est le filtre le plus fiable pour distinguer les développeurs d'Expert Advisors professionnels des autres.">
+<meta name="author" content="Augustin Kuate Fotso — FOTSO COMPANY">
+<style>
+  :root {
+    --navy: #0a2540;
+    --navy-deep: #06182e;
+    --navy-soft: #13304a;
+    --accent: #facc15;
+    --accent-br: #fde047;
+    --accent-deep: #ca8a04;
+    --text: #1f2937;
+    --text-soft: #374151;
+    --muted: #6b7280;
+    --muted-light: #9ca3af;
+    --border: #e2e8f0;
+    --border-soft: #f1f5f9;
+    --light-bg: #f8fafc;
+    --warn-bg: #fef9e7;
+    --warn-border: #facc15;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Charter', 'Iowan Old Style', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+    color: var(--text);
+    background: #ffffff;
+    line-height: 1.7;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .topbar {
+    background: var(--navy);
+    color: #ffffff;
+    padding: 18px 0;
+    border-bottom: 3px solid var(--accent);
+  }
+  .topbar-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: #ffffff;
+  }
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: -1px;
+  }
+  .brand-name {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+  }
+  .brand-tag {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--accent);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .nav-back {
+    font-size: 13px;
+    color: #cbd5e1;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  .lang-switch {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 4px 8px;
+    border: 1px solid var(--accent);
+    margin-left: 14px;
+  }
+  .lang-switch:hover {
+    background: var(--accent);
+    color: var(--navy);
+  }
+
+  .article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 32px 80px;
+  }
+
+  .article-header {
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--border);
+  }
+  .article-category {
+    display: inline-block;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    color: var(--accent-deep);
+    background: var(--warn-bg);
+    padding: 6px 12px;
+    margin-bottom: 24px;
+    border-left: 3px solid var(--accent);
+  }
+  .article-title {
+    font-family: 'Charter', Georgia, serif;
+    font-size: 38px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    margin-bottom: 18px;
+  }
+  .article-subtitle {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--muted);
+    font-style: italic;
+    font-weight: 400;
+    margin-bottom: 30px;
+  }
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .article-meta .author {
+    color: var(--navy);
+    font-weight: 600;
+  }
+  .article-meta .separator {
+    color: var(--border);
+  }
+
+  .article-body { color: var(--text-soft); }
+  .article-body section { margin-bottom: 44px; }
+
+  .article-body h2 {
+    font-family: 'Charter', Georgia, serif;
+    font-size: 26px;
+    line-height: 1.3;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 8px;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+    position: relative;
+    padding-bottom: 10px;
+  }
+  .article-body h2::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 48px;
+    height: 3px;
+    background: var(--accent);
+  }
+  .article-body h2 .section-num {
+    color: var(--accent-deep);
+    font-weight: 800;
+    margin-right: 12px;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .article-body h3 {
+    font-family: 'Charter', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.4;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 28px;
+    margin-bottom: 12px;
+  }
+
+  .article-body p {
+    margin-bottom: 18px;
+    font-size: 18px;
+    line-height: 1.75;
+  }
+
+  .article-body p.lead {
+    font-size: 20px;
+    color: var(--navy);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .article-body strong { color: var(--navy); font-weight: 700; }
+  .article-body em { font-style: italic; }
+
+  .article-body ul, .article-body ol {
+    margin: 14px 0 24px 0;
+    padding-left: 28px;
+  }
+  .article-body ul li, .article-body ol li {
+    margin-bottom: 10px;
+    line-height: 1.7;
+  }
+  .article-body ul li::marker { color: var(--accent-deep); }
+
+  .article-body code {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 15px;
+    background: var(--light-bg);
+    padding: 2px 7px;
+    border-radius: 3px;
+    color: var(--navy);
+    border: 1px solid var(--border);
+  }
+
+  .pullquote {
+    margin: 28px 0;
+    padding: 22px 28px;
+    background: var(--warn-bg);
+    border-left: 4px solid var(--accent);
+    font-family: 'Charter', Georgia, serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+  .pullquote .quote-source {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    font-style: normal;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .abuse-item {
+    margin-bottom: 26px;
+    padding-left: 0;
+  }
+  .abuse-item .abuse-title {
+    font-family: 'Charter', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .abuse-item .abuse-num {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: var(--navy);
+    color: var(--accent);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-size: 14px;
+    font-weight: 800;
+    margin-right: 10px;
+    vertical-align: middle;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .questions-block {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--navy);
+    padding: 24px 30px;
+    margin: 24px 0;
+    border-radius: 0;
+  }
+  .questions-block ol {
+    padding-left: 22px;
+    margin: 0;
+  }
+  .questions-block ol li {
+    margin-bottom: 14px;
+    color: var(--text-soft);
+  }
+  .questions-block ol li strong { color: var(--navy); }
+
+  .protocol-step {
+    margin-bottom: 22px;
+    padding-left: 50px;
+    position: relative;
+  }
+  .protocol-step .step-num {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    color: var(--navy);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 36px;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .protocol-step .step-title {
+    font-family: 'Charter', Georgia, serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .checklist {
+    background: var(--navy);
+    color: #e2e8f0;
+    padding: 32px 36px;
+    margin: 32px 0;
+    border-radius: 4px;
+    border-top: 4px solid var(--accent);
+  }
+  .checklist h3 {
+    color: var(--accent) !important;
+    font-family: 'Helvetica Neue', Arial, sans-serif !important;
+    font-size: 13px !important;
+    letter-spacing: 3px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    margin-top: 0 !important;
+    margin-bottom: 22px !important;
+  }
+  .checklist ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .checklist ul li {
+    padding: 10px 0 10px 32px;
+    position: relative;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    border-bottom: 1px dashed var(--navy-soft);
+  }
+  .checklist ul li:last-child { border-bottom: none; }
+  .checklist ul li::before {
+    content: "▢";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 800;
+  }
+  .checklist-conclusion {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid var(--navy-soft);
+    color: var(--accent-br);
+    font-style: italic;
+    font-family: 'Charter', Georgia, serif;
+    font-size: 16px;
+  }
+
+  .conclusion-emphasis {
+    background: var(--warn-bg);
+    border-left: 4px solid var(--accent);
+    padding: 18px 24px;
+    margin: 22px 0;
+    font-family: 'Charter', Georgia, serif;
+    font-size: 18px;
+    color: var(--navy);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .signature {
+    margin-top: 60px;
+    padding-top: 36px;
+    border-top: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .signature-mark {
+    width: 56px;
+    height: 56px;
+    background: var(--navy);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .signature-text {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .signature-text .name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 0.3px;
+  }
+  .signature-text .role {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .signature-text .links {
+    font-size: 12px;
+    color: var(--accent-deep);
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+  }
+  .signature-text .links a {
+    color: var(--accent-deep);
+    text-decoration: none;
+    margin-right: 14px;
+  }
+  .signature-text .links a:hover { text-decoration: underline; }
+
+  .article-footer {
+    background: var(--navy-deep);
+    color: #cbd5e1;
+    padding: 40px 0;
+    text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .article-footer .footer-brand {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .article-footer .footer-tag {
+    color: var(--muted-light);
+    font-style: italic;
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .article { padding: 40px 22px 60px; }
+    .article-title { font-size: 28px; }
+    .article-subtitle { font-size: 17px; }
+    .article-body h2 { font-size: 22px; }
+    .article-body p, .article-body p.lead { font-size: 16px; }
+    .pullquote { font-size: 17px; padding: 18px 20px; }
+    .checklist { padding: 24px 22px; }
+    .topbar-inner { padding: 0 22px; }
+    .signature { flex-direction: column; align-items: flex-start; gap: 14px; }
+  }
+
+  @media print {
+    .topbar, .article-footer { display: none; }
+    body { font-size: 11pt; }
+    .article { max-width: 100%; padding: 0; }
+    .article-title { color: #000 !important; }
+    .pullquote, .checklist, .questions-block, .conclusion-emphasis { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">
+      <div class="brand-mark">F</div>
+      <div>
+        <div class="brand-name">FOTSO COMPANY</div>
+        <div class="brand-tag">QUANT · AUDIT · RESEARCH</div>
+      </div>
+    </a>
+    <div>
+      <a class="nav-back" href="../index.html">← Retour FOTSO</a>
+      <a class="lang-switch" href="dll-imports-red-flag.html">EN</a>
+    </div>
+  </div>
+</header>
+
+<article class="article">
+
+  <header class="article-header">
+    <span class="article-category">SÉCURITÉ · MÉTHODOLOGIE</span>
+    <h1 class="article-title">Allow DLL Imports : anatomie d'un red flag à l'installation d'un EA</h1>
+    <p class="article-subtitle">Pourquoi une seule case à cocher dans MetaTrader sépare les développeurs d'Expert Advisors professionnels des autres — et ce qu'il faut faire avant de cliquer dessus.</p>
+    <div class="article-meta">
+      <span class="author">Augustin Kuate Fotso</span>
+      <span class="separator">·</span>
+      <span>21 juin 2026</span>
+      <span class="separator">·</span>
+      <span>7 min de lecture</span>
+    </div>
+  </header>
+
+  <div class="article-body">
+
+    <section>
+      <p class="lead">Si vous tradez avec MetaTrader et utilisez des Expert Advisors distribués par la communauté, cet article s'adresse à vous.</p>
+
+      <p>Chaque semaine, dans les canaux Telegram et les serveurs Discord, des traders publient des backtests et des « résultats live » d'Expert Advisors vantant des taux de réussite élevés et des performances compatibles prop firms. La plupart de ces EAs sont livrés avec des instructions d'installation. Et dans ces instructions, vous trouverez souvent une case à cocher d'apparence anodine :</p>
+
+      <div class="pullquote">
+        ☑ Allow DLL imports
+        <span class="quote-source">— Exigence d'installation standard des EAs, souvent présentée sans explication.</span>
+      </div>
+
+      <p>MetaTrader lui-même vous avertit, dans la même fenêtre :</p>
+
+      <div class="pullquote">
+        « potentially dangerous, enable only for trusted applications »
+        <span class="quote-source">— MetaTrader 5, fenêtre Options, onglet Expert Advisors.</span>
+      </div>
+
+      <p>Cet article explique ce que cet avertissement signifie réellement, pourquoi la plupart des EAs n'en ont pas besoin, et comment vous protéger avant de cliquer sur cette case.</p>
+
+      <p>J'écris ceci en tant qu'auditeur quantitatif — j'analyse des systèmes de trading pour vivre, et l'une des premières choses que je vérifie sur n'importe quel EA inconnu, c'est s'il exige des imports DLL.</p>
+    </section>
+
+    <section>
+      <h2><span class="section-num">01</span>Ce que font réellement les imports DLL</h2>
+
+      <p>MQL5 et MQL4 sont des langages conçus pour fonctionner en sandbox. Lorsque vous écrivez un Expert Advisor en pur MQL, votre code s'exécute à l'intérieur de l'environnement contrôlé de MetaTrader. Il peut placer des ordres, lire les prix, envoyer des notifications, faire des requêtes HTTP (uniquement vers des URLs whitelistées), et effectuer des opérations sur fichiers dans le dossier sandbox de MetaTrader.</p>
+
+      <p>Ce qu'il ne peut pas faire, par design :</p>
+      <ul>
+        <li>Lire ou écrire des fichiers arbitraires sur votre ordinateur</li>
+        <li>Exécuter des commandes système ou des processus shell</li>
+        <li>Installer d'autres programmes</li>
+        <li>Communiquer avec des serveurs non whitelistés</li>
+        <li>Accéder directement aux API de votre système d'exploitation</li>
+      </ul>
+
+      <p>Cette sandboxing est intentionnelle. C'est ce qui rend MetaTrader sûr à exécuter sur votre machine, même avec des EAs provenant de développeurs inconnus.</p>
+
+      <p><strong>Les imports DLL cassent la sandbox.</strong></p>
+
+      <p>Une DLL (Dynamic Link Library) est un fichier Windows contenant du code exécutable. Lorsque MetaTrader est autorisé à appeler des imports DLL, votre EA peut appeler n'importe quelle fonction à l'intérieur de n'importe quelle DLL — DLLs système, DLLs tierces, ou DLLs que le développeur a livrées avec son EA.</p>
+
+      <p>Concrètement : une DLL peut faire tout ce qu'un programme Windows ordinaire peut faire. Elle s'exécute avec les mêmes privilèges que MetaTrader lui-même.</p>
+    </section>
+
+    <section>
+      <h2><span class="section-num">02</span>Pourquoi un EA légitime n'a presque jamais besoin d'imports DLL</h2>
+
+      <p>MQL5 et MQL4 exposent déjà pratiquement toutes les fonctions dont un algorithme de trading a besoin :</p>
+
+      <ul>
+        <li>Opérations de trading (<code>OrderSend</code>, <code>OrderModify</code>, <code>OrderClose</code>, gestion des positions)</li>
+        <li>Données de marché (prix, indicateurs personnalisés, carnet d'ordres, données tick)</li>
+        <li>Informations de compte (solde, équité, marge, levier)</li>
+        <li>Graphiques et visualisation (objets de dessin, dashboards, commentaires)</li>
+        <li>Requêtes réseau (<code>WebRequest</code> vers URLs whitelistées)</li>
+        <li>Notifications (push, email, alertes sonores)</li>
+        <li>Mathématiques et statistiques (opérations matricielles disponibles en MQL5)</li>
+        <li>Opérations sur fichiers à l'intérieur de la sandbox MetaTrader</li>
+      </ul>
+
+      <p>Le pour cent restant de cas d'usage légitimes pour les imports DLL :</p>
+
+      <ol>
+        <li>Interfaçage avec du matériel spécialisé (un boîtier de trading personnalisé)</li>
+        <li>Connexion à une API broker propriétaire sans connecteur MetaTrader standard</li>
+        <li>Intégration d'une bibliothèque quantitative personnalisée écrite en C++</li>
+        <li>Opérations haute fréquence très spécifiques nécessitant une optimisation de performance pointue</li>
+      </ol>
+
+      <p>Dans chaque cas légitime, le développeur publie le code source de la DLL, explique exactement ce qu'elle fait, et accepte les vérifications. Si le développeur ne peut pas ou ne veut pas le faire, la légitimité est suspecte.</p>
+    </section>
+
+    <section>
+      <h2><span class="section-num">03</span>Ce que font typiquement les DLL malveillantes</h2>
+
+      <p>D'après mes observations dans le domaine de l'audit, voici à quoi servent communément les DLLs dans les EAs distribués via les canaux publics :</p>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">1</span>Exfiltration de credentials</div>
+        <p>La DLL lit vos fichiers de configuration MetaTrader, extrait votre identifiant broker, votre mot de passe et l'adresse du serveur, puis les transmet à un endpoint distant. Le développeur peut alors accéder directement à votre compte — voir votre solde et vos trades, et dans certains cas déclencher des retraits ou placer des ordres si votre broker n'impose pas d'authentification à deux facteurs sur les opérations API.</p>
+      </div>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">2</span>Mirroring de trades (l'arnaque du « fade »)</div>
+        <p>La DLL transmet chaque trade que vous placez à un serveur distant. Le développeur, ou son partenaire broker, voit le flux agrégé de tous les utilisateurs faisant tourner l'EA et trade contre ce flux — sachant précisément où les stop-loss vont se déclencher. L'utilisateur perçoit un EA profitable ; le développeur récolte le spread broker plus le profit d'adverse selection.</p>
+      </div>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">3</span>Mineur de cryptomonnaie</div>
+        <p>La DLL installe un processus caché qui utilise votre CPU ou GPU pour miner de la cryptomonnaie pour le développeur. Le minage tourne typiquement en basse priorité pour que vous ne le remarquiez pas immédiatement, mais les coûts s'accumulent — consommation électrique, usure matérielle, réactivité réduite de la plateforme de trading. Sur un VPS de trading 24/7, cette attaque est particulièrement profitable.</p>
+      </div>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">4</span>Cheval de Troie d'accès à distance (RAT)</div>
+        <p>La DLL installe une porte dérobée persistante donnant au développeur un accès continu à votre ordinateur. Il peut lire vos fichiers, observer votre écran, exfiltrer les mots de passe stockés par votre navigateur, installer des ransomwares, ou enrôler votre machine dans un botnet. Plus rare que les autres catégories, mais documenté dans la recherche en sécurité.</p>
+      </div>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">5</span>Contournement de la whitelist WebRequest</div>
+        <p>MetaTrader exige le whitelisting d'URL pour chaque appel <code>WebRequest</code> — une fonctionnalité de sécurité délibérée. Une DLL la contourne entièrement. Une fois les imports DLL activés, l'EA peut faire des requêtes HTTP vers n'importe quel endpoint, peu importe ce qui est configuré dans votre whitelist d'URLs.</p>
+      </div>
+
+      <div class="abuse-item">
+        <div class="abuse-title"><span class="abuse-num">6</span>Persistance au-delà de la désinstallation</div>
+        <p>La DLL s'écrit elle-même dans un emplacement de démarrage système pour continuer à s'exécuter même après que vous avez retiré l'EA. Certaines DLLs malveillantes persistent sur les machines des utilisateurs pendant des mois après que l'EA original a été désinstallé.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-num">04</span>Comment évaluer la demande DLL d'un développeur</h2>
+
+      <p>Si vous envisagez d'utiliser un EA qui exige des imports DLL, posez quatre questions au développeur. Un développeur légitime répond aux quatre sans hésitation :</p>
+
+      <div class="questions-block">
+        <ol>
+          <li><strong>Que fait spécifiquement la DLL ?</strong> Une vague « optimisation des performances » ou « fonctionnalités avancées » n'est pas une réponse. Le développeur doit pouvoir nommer les appels API Windows spécifiques ou les fonctions de bibliothèques tierces utilisés.</li>
+          <li><strong>Le code source de la DLL est-il disponible pour inspection ?</strong> Si oui, un programmeur (ou un auditeur payé) peut l'examiner. Si non, vous faites confiance à un binaire opaque.</li>
+          <li><strong>À quels endpoints réseau la DLL se connecte-t-elle ?</strong> Les DLLs légitimes soit n'appellent pas le réseau du tout, soit appellent des endpoints documentés. Les DLLs malveillantes les cachent ou les obfusquent.</li>
+          <li><strong>L'EA a-t-il été audité indépendamment ?</strong> Un audit par un professionnel quant ou sécurité reconnu doit être public, daté, et faire référence à la version spécifique de l'EA.</li>
+        </ol>
+      </div>
+
+      <p>Si le développeur évite l'une de ces questions, devient défensif, ou pivote vers du langage marketing (« mais notre IA est tellement avancée ! »), partez.</p>
+    </section>
+
+    <section>
+      <h2><span class="section-num">05</span>Protocole de test sécurisé</h2>
+
+      <p>Si vous décidez de tester un EA provenant d'un développeur inconnu — même un qui n'exige pas d'imports DLL — utilisez le protocole suivant :</p>
+
+      <div class="protocol-step">
+        <span class="step-num">1</span>
+        <div class="step-title">Machine virtuelle dédiée</div>
+        <p>Installez VirtualBox (gratuit) ou VMware sur votre ordinateur principal. Créez une VM Windows spécifiquement pour le test d'EAs. N'utilisez jamais cette VM pour autre chose.</p>
+      </div>
+
+      <div class="protocol-step">
+        <span class="step-num">2</span>
+        <div class="step-title">Snapshot avant installation</div>
+        <p>Après avoir configuré MetaTrader dans la VM, prenez un snapshot. Après chaque test d'EA, revenez à cet état propre. Cela isole tout malware à la session de test.</p>
+      </div>
+
+      <div class="protocol-step">
+        <span class="step-num">3</span>
+        <div class="step-title">Compte démo neuf uniquement</div>
+        <p>Ne connectez jamais un compte live ou financé à une VM de test. Utilisez un compte démo d'un broker que vous n'utilisez nulle part ailleurs. Les credentials doivent être uniques et sans importance.</p>
+      </div>
+
+      <div class="protocol-step">
+        <span class="step-num">4</span>
+        <div class="step-title">Monitoring réseau</div>
+        <p>Lancez un sniffer de paquets (Wireshark) sur la machine hôte et surveillez le trafic sortant de la VM pendant le backtest. Un EA propre génère un trafic minimal. Des appels sortants fréquents vers des endpoints inconnus sont un red flag.</p>
+      </div>
+
+      <div class="protocol-step">
+        <span class="step-num">5</span>
+        <div class="step-title">Sessions limitées dans le temps</div>
+        <p>Exécutez l'EA pour une session définie — par exemple, un backtest de huit heures. Après la session, éteignez la VM et examinez ce qui s'est passé. Ne laissez pas la VM tourner pendant des jours.</p>
+      </div>
+
+      <div class="protocol-step">
+        <span class="step-num">6</span>
+        <div class="step-title">Jamais sur votre PC de trading ou votre compte principal</div>
+        <p>Cela ne devrait pas avoir besoin d'être dit, mais : si vous tradez de l'argent réel, votre machine de trading et votre compte de trading sont sacrés. Ils ne voient jamais un EA non audité.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="checklist">
+        <h3>Checklist trente secondes avant installation</h3>
+        <ul>
+          <li>L'installation exige-t-elle « Allow DLL imports » ? Si oui, posez les quatre questions ci-dessus avant de continuer.</li>
+          <li>Exige-t-elle « Allow WebRequest » vers des URLs que vous ne reconnaissez pas ? Vérifiez ce que chaque URL est.</li>
+          <li>L'EA provient-il d'un canal public — Telegram, Discord, téléchargement gratuit ? Appliquez le scepticisme maximum.</li>
+          <li>L'identité du développeur est-elle vérifiable ? Vrai nom, profil public, méthodologie publique, historique d'audits.</li>
+          <li>Les claims marketing sont-ils réalistes ? Les taux de réussite supérieurs à 90 % et les drawdowns inférieurs à 1 % sont des impossibilités statistiques.</li>
+          <li>Y a-t-il un track record live indépendant sur myfxbook ou mql5.com signals ? Pas un screenshot — un flux vérifiable extérieurement.</li>
+          <li>Êtes-vous prêt à perdre le compte démo sur lequel ça tourne ?</li>
+        </ul>
+        <div class="checklist-conclusion">Si vous ne pouvez pas répondre « oui » à toutes ces questions, vous avez votre verdict.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-num">06</span>Conclusion</h2>
+
+      <p>L'écosystème MetaTrader compte plus d'outils et de développeurs réellement utiles que toute autre plateforme de trading retail. Il compte aussi plus d'arnaques.</p>
+
+      <div class="conclusion-emphasis">
+        La case « Allow DLL imports » est le filtre le plus fiable pour distinguer les développeurs professionnels des malveillants — et l'avertissement que MetaTrader affiche lui-même à côté est correct.
+      </div>
+
+      <p>Dans le doute, partez. Il y a des milliers d'EAs disponibles. Le coût de passer à côté d'une vraie opportunité est faible. Le coût d'installer un EA malveillant, c'est votre capital de trading, vos credentials broker, et possiblement votre ordinateur.</p>
+
+      <p>Si vous avez un EA que vous voulez faire auditer avant de déployer du capital, ma méthodologie est ouverte et documentée. FOTSO COMPANY publie des études de cas sur le sujet — incluant un audit récent qui a exposé un piège à 100 % de drawdown derrière une revendication de 77 % de taux de réussite.</p>
+
+      <p><strong>Restez prudents. Auditez tôt. Et ne cliquez jamais « Allow DLL imports » sur la foi.</strong></p>
+    </section>
+
+    <div class="signature">
+      <div class="signature-mark">F</div>
+      <div class="signature-text">
+        <div class="name">Augustin Kuate Fotso</div>
+        <div class="role">Fondateur — FOTSO COMPANY · Quant · Audit · Research</div>
+        <div class="links">
+          <a href="https://augustinfotso67-cloud.github.io/fotso-audit/">augustinfotso67-cloud.github.io/fotso-audit</a>
+          <a href="https://github.com/augustinfotso67-cloud">github.com/augustinfotso67-cloud</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</article>
+
+<footer class="article-footer">
+  <div class="footer-brand">FOTSO COMPANY</div>
+  <div class="footer-tag">Anti-overfit. Anti-gourou. Données d'abord.</div>
+</footer>
+
+</body>
+</html>
