@@ -473,6 +473,36 @@
   .article-card { padding: 26px 24px; }
   .article-card-title { font-size: 19px; }
 }
+  /* SECTION VIDÉO MANIFESTE */
+.manifesto-video {
+  background: linear-gradient(180deg, #0a2540 0%, #06182e 100%);
+  padding: 80px 24px;
+}
+.mv-inner { max-width: 760px; margin: 0 auto; text-align: center; }
+.mv-eyebrow {
+  display: inline-block;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px; letter-spacing: 3px; font-weight: 700;
+  color: #facc15; background: rgba(250,204,21,0.1);
+  padding: 6px 14px; border-left: 3px solid #facc15; margin-bottom: 20px;
+}
+.mv-title {
+  font-size: 32px; font-weight: 800; color: #ffffff;
+  line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 12px;
+}
+.mv-sub { font-size: 16px; color: #a8b8ce; font-style: italic; margin-bottom: 36px; }
+.mv-frame {
+  position: relative; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(250,204,21,0.25);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(250,204,21,0.1);
+  background: #000; max-width: 380px; margin: 0 auto;
+}
+.mv-frame video { width: 100%; height: auto; display: block; }
+@media (max-width: 640px) {
+  .manifesto-video { padding: 56px 18px; }
+  .mv-title { font-size: 24px; }
+  .mv-frame { max-width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -682,6 +712,21 @@
   </div>
 </div>
 <!-- ARTICLES / METHODOLOGY SECTION -->
+  <!-- SECTION VIDÉO MANIFESTE -->
+<section class="manifesto-video">
+  <div class="mv-inner">
+    <span class="mv-eyebrow">LE MANIFESTE FOTSO</span>
+    <h2 class="mv-title">Un vrai edge — ou un beau mensonge ?</h2>
+    <p class="mv-sub">50 secondes sur ce que nous faisons, et pourquoi.</p>
+    <div class="mv-frame">
+      <video controls playsinline preload="metadata"
+             poster="assets/FOTSO_01_courbe.jpeg">
+        <source src="assets/fotso-manifesto.mp4" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture vidéo.
+      </video>
+    </div>
+  </div>
+</section>
 <section class="articles-section">
   <div class="articles-container">
     <div class="articles-header">
